@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비밀 암호 탐험대</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 귀여운 폰트 'Jua' 불러오기 -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', sans-serif; /* 전체 폰트를 귀여운 폰트로 변경 */
+            background-color: #fffbeb; /* 따뜻한 노란색 배경 */
+            /* 텍스트 드래그 방지 (아이들이 잘못 누르는 것 방지) */
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        /* 기호가 잘 보이도록 약간의 조정 */
+        .symbol-display {
+            font-family: "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        }
+
+        /* 통통 튀는 귀여운 3D 버튼 스타일 */
+        .cute-btn {
+            transition: all 0.1s ease-in-out;
+            cursor: pointer;
+        }
+        .cute-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 0 transparent !important;
+        }
+
+        /* 핑크색 버튼 (암호 만들기) */
+        .btn-pink {
+            background-color: #fbcfe8;
+            color: #be185d;
+            border: 4px solid #f472b6;
+            box-shadow: 0 8px 0 0 #ec4899;
+        }
+
+        /* 파란색 버튼 (암호 풀기) */
+        .btn-blue {
+            background-color: #bfdbfe;
+            color: #1d4ed8;
+            border: 4px solid #60a5fa;
+            box-shadow: 0 8px 0 0 #3b82f6;
+        }
+
+        /* 노란색 버튼 (일반 동작) */
+        .btn-yellow {
+            background-color: #fef08a;
+            color: #b45309;
+            border: 4px solid #facc15;
+            box-shadow: 0 6px 0 0 #eab308;
+        }
+
+        /* 키보드 버튼 스타일 */
+        .key-btn {
+            background-color: #ffffff;
+            border: 3px solid #cbd5e1;
+            box-shadow: 0 5px 0 0 #94a3b8;
+            transition: all 0.1s;
+        }
+        .key-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 0 #94a3b8;
+        }
+
+        /* 화면 전환 애니메이션 */
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen w-full overflow-x-hidden flex flex-col items-center p-4">
+
+    <!-- ==========================================
+         [1] 첫 화면 (모드 선택)
+    =========================================== -->
+    <div id="screen-home" class="w-full max-w-2xl mt-12 flex flex-col items-center gap-12 fade-in">
+        <div class="text-center">
+            <h1 class="text-5xl md:text-6xl text-amber-500 drop-shadow-md" style="-webkit-text-stroke: 1px #b45309;">
+                🕵️‍♂️ 비밀 암호 탐험대
+            </h1>
+            <p class="text-xl md:text-2xl text-amber-700 mt-4">어떤 탐험을 떠나볼까요?</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6 w-full px-4">
+            <div onclick="goToScreen('screen-generator')" class="cute-btn btn-pink flex-1 py-12 rounded-[2rem] flex flex-col items-center justify-center gap-4">
+                <span class="text-6xl">✍️</span>
+                <span class="text-3xl md:text-4xl">암호 만들기</span>
+                <span class="text-lg opacity-80">(글자 → 기호)</span>
+            </div>
+            
+            <div onclick="goToScreen('screen-solver')" class="cute-btn btn-blue flex-1 py-12 rounded-[2rem] flex flex-col items-center justify-center gap-4">
+                <span class="text-6xl">🔍</span>
+                <span class="text-3xl md:text-4xl">암호 풀기</span>
+                <span class="text-lg opacity-80">(기호 → 글자)</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         [2] 암호 만들기 화면 (생성기)
+    =========================================== -->
+    <div id="screen-generator" class="w-full max-w-4xl hidden fade-in pb-10">
+        <!-- 상단 네비게이션 -->
+        <div class="flex justify-between items-center mb-6 pt-2">
+            <button onclick="goToScreen('screen-home')" class="cute-btn btn-yellow px-6 py-2 rounded-2xl text-xl flex items-center gap-2">
+                <span>◀</span> 뒤로 가기
+            </button>
+            <h2 class="text-3xl text-pink-600 drop-shadow-sm">✍️ 암호 만들기</h2>
+            <div class="w-24"></div> <!-- 여백 맞춤용 -->
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 입력창 -->
+            <div class="bg-white rounded-3xl shadow-lg p-6 border-4 border-pink-200 flex flex-col h-[300px]">
+                <label for="inputText" class="text-2xl mb-2 text-pink-500 flex justify-between items-center">
+                    <span>1. 한글을 입력하세요</span>
+                    <button onclick="clearGenerator()" class="text-base bg-slate-100 hover:bg-slate-200 text-slate-500 px-3 py-1 rounded-xl border-2 border-slate-200">싹 지우기</button>
+                </label>
+                <textarea id="inputText" 
+                          class="flex-1 w-full bg-pink-50 rounded-2xl p-4 text-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 resize-none font-sans" 
+                          placeholder="여기에 친구에게 보낼 비밀 메시지를 적어보세요!"></textarea>
+            </div>
+
+            <!-- 출력창 -->
+            <div class="bg-white rounded-3xl shadow-lg p-6 border-4 border-blue-200 flex flex-col h-[300px]">
+                <label class="text-2xl mb-2 text-blue-500">2. 쨘! 암호가 되었어요</label>
+                <p class="text-sm text-slate-500 mb-2">💡 암호를 클릭하면 원래 글자를 볼 수 있어요!</p>
+                <div id="outputText" 
+                     class="flex-1 w-full bg-blue-50 rounded-2xl p-4 flex flex-wrap content-start gap-3 overflow-y-auto symbol-display">
+                </div>
+            </div>
+        </div>
+
+        <!-- 암호표 (참고용) -->
+        <div class="mt-8 bg-white rounded-3xl shadow-lg p-6 border-4 border-amber-200">
+            <h3 class="text-2xl text-amber-600 mb-4 text-center">📋 암호표</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px] border-collapse text-center">
+                    <tbody id="generatorTableBody" class="symbol-display"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         [3] 암호 풀기 화면 (해독기)
+    =========================================== -->
+    <div id="screen-solver" class="w-full max-w-4xl hidden fade-in pb-10">
+        <!-- 상단 네비게이션 -->
+        <div class="flex justify-between items-center mb-6 pt-2">
+            <button onclick="goToScreen('screen-home')" class="cute-btn btn-yellow px-6 py-2 rounded-2xl text-xl flex items-center gap-2">
+                <span>◀</span> 뒤로 가기
+            </button>
+            <h2 class="text-3xl text-blue-600 drop-shadow-sm">🔍 암호 풀기</h2>
+            <div class="w-24"></div>
+        </div>
+
+        <!-- 풀이 결과창 (노트북 모양) -->
+        <div class="bg-white rounded-3xl shadow-lg p-6 border-4 border-blue-300 mb-6 flex flex-col min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <label class="text-2xl text-blue-600">친구가 보낸 암호의 뜻은?</label>
+                <div class="flex gap-2">
+                    <button onclick="solverSpace()" class="cute-btn btn-yellow px-4 py-2 rounded-xl text-lg">띄어쓰기</button>
+                    <button onclick="solverBackspace()" class="cute-btn bg-red-100 text-red-600 border-2 border-red-300 px-4 py-2 rounded-xl text-lg hover:bg-red-200">지우기 ⌫</button>
+                    <button onclick="clearSolver()" class="cute-btn bg-slate-100 text-slate-600 border-2 border-slate-300 px-4 py-2 rounded-xl text-lg">전체 삭제</button>
+                </div>
+            </div>
+            <!-- 글자들이 나타나는 곳 -->
+            <div id="solverOutput" class="flex-1 flex flex-wrap gap-2 text-4xl text-slate-800 bg-blue-50 rounded-2xl p-4 min-h-[80px]">
+                <!-- 자바스크립트로 글자 카드가 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- 암호 키보드 -->
+        <div class="bg-white rounded-3xl shadow-lg p-4 md:p-6 border-4 border-slate-200">
+            <p class="text-xl text-slate-500 mb-4 text-center">👇 종이에 적힌 암호 모양을 아래에서 똑같이 찾아 눌러보세요!</p>
+            <div id="solverKeyboard" class="grid grid-cols-6 gap-2 md:gap-4 symbol-display">
+                <!-- 자바스크립트로 버튼들이 생성됩니다 -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         자바스크립트 로직
+    =========================================== -->
+    <script>
+        // 커스텀 도형 SVG 정의
+        const svgs = {
+            'ㅁ': '<svg viewBox="0 0 100 100" style="width: 1em; height: 1em; display: inline-block; vertical-align: -0.1em;"><rect x="15" y="15" width="70" height="70" fill="none" stroke="currentColor" stroke-width="8"/><line x1="15" y1="50" x2="85" y2="50" stroke="currentColor" stroke-width="8"/></svg>',
+            'ㅊ': '<svg viewBox="0 0 100 100" style="width: 1em; height: 1em; display: inline-block; vertical-align: -0.1em;"><rect x="15" y="15" width="70" height="70" fill="none" stroke="currentColor" stroke-width="8"/><line x1="50" y1="15" x2="50" y2="85" stroke="currentColor" stroke-width="8"/></svg>',
+            'ㅏ': '<svg viewBox="0 0 100 100" style="width: 1em; height: 1em; display: inline-block; vertical-align: -0.1em;"><polygon points="50,15 85,85 15,85" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/><line x1="50" y1="15" x2="50" y2="85" stroke="currentColor" stroke-width="8"/></svg>',
+            'ㅔ': '<svg viewBox="0 0 100 100" style="width: 1em; height: 1em; display: inline-block; vertical-align: -0.1em;"><polygon points="50,15 85,50 50,85 15,50" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/><polygon points="50,35 65,50 50,65 35,50" fill="currentColor"/></svg>',
+        };
+
+        // ㅖ와 ㅒ 기호 수정 반영
+        const symbolMap = {
+            'ㄱ': '☆', 'ㄴ': '◇', 'ㄷ': '♡', 'ㄹ': '♩', 'ㅁ': svgs['ㅁ'],
+            'ㅂ': '★', 'ㅅ': '◆', 'ㅇ': '♥', 'ㅈ': '$', 'ㅊ': svgs['ㅊ'],
+            'ㅋ': '#', 'ㅌ': '□', 'ㅍ': '▣', 'ㅎ': '∞', 'ㅏ': svgs['ㅏ'],
+            'ㅑ': '○', 'ㅓ': '■', 'ㅕ': '◐', 'ㅗ': '∮', 'ㅛ': '⊖',
+            'ㅜ': '●', 'ㅠ': '△', 'ㅡ': '→', 'ㅣ': 'Σ', 'ㅔ': svgs['ㅔ'],
+            'ㅖ': '◎', 'ㅐ': '▲', 'ㅒ': '＝', '!': 'Ψ', '?': '⋈'
+        };
+
+        // 표의 ㅖ와 ㅒ 위치 수정 반영
+        const tableData = [
+            ['ㄱ', 'ㅂ', 'ㅋ', 'ㅑ', 'ㅜ', 'ㅖ'],
+            ['ㄴ', 'ㅅ', 'ㅌ', 'ㅓ', 'ㅠ', 'ㅐ'],
+            ['ㄷ', 'ㅇ', 'ㅍ', 'ㅕ', 'ㅡ', 'ㅒ'],
+            ['ㄹ', 'ㅈ', 'ㅎ', 'ㅗ', 'ㅣ', '!'],
+            ['ㅁ', 'ㅊ', 'ㅏ', 'ㅛ', 'ㅔ', '?']
+        ];
+
+        // 한글 분해용 데이터
+        const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+        const JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        const CHO_MAP = {'ㄲ': ['ㄱ','ㄱ'], 'ㄸ': ['ㄷ','ㄷ'], 'ㅃ': ['ㅂ','ㅂ'], 'ㅆ': ['ㅅ','ㅅ'], 'ㅉ': ['ㅈ','ㅈ']};
+        const JUNG_MAP = {'ㅘ': ['ㅗ','ㅏ'], 'ㅙ': ['ㅗ','ㅐ'], 'ㅚ': ['ㅗ','ㅣ'], 'ㅝ': ['ㅜ','ㅓ'], 'ㅞ': ['ㅜ','ㅔ'], 'ㅟ': ['ㅜ','ㅣ'], 'ㅢ': ['ㅡ','ㅣ']};
+        const JONG_MAP = {'ㄲ': ['ㄱ','ㄱ'], 'ㄳ': ['ㄱ','ㅅ'], 'ㄵ': ['ㄴ','ㅈ'], 'ㄶ': ['ㄴ','ㅎ'], 'ㄺ': ['ㄹ','ㄱ'], 'ㄻ': ['ㄹ','ㅁ'], 'ㄼ': ['ㄹ','ㅂ'], 'ㄽ': ['ㄹ','ㅅ'], 'ㄾ': ['ㄹ','ㅌ'], 'ㄿ': ['ㄹ','ㅍ'], 'ㅀ': ['ㄹ','ㅎ'], 'ㅄ': ['ㅂ','ㅅ'], 'ㅆ': ['ㅅ','ㅅ']};
+
+        // ==========================================
+        // 화면 전환 로직
+        // ==========================================
+        function goToScreen(screenId) {
+            document.getElementById('screen-home').classList.add('hidden');
+            document.getElementById('screen-generator').classList.add('hidden');
+            document.getElementById('screen-solver').classList.add('hidden');
+            
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 공통 유틸리티
+        // ==========================================
+        function decomposeChar(char) {
+            let code = char.charCodeAt(0);
+            if (code >= 0xAC00 && code <= 0xD7A3) {
+                let offset = code - 0xAC00;
+                let jongIdx = offset % 28;
+                let jungIdx = Math.floor(offset / 28) % 21;
+                let choIdx = Math.floor(offset / (28 * 21));
+
+                let cho = CHO[choIdx];
+                let jung = JUNG[jungIdx];
+                let jong = JONG[jongIdx];
+
+                let result = [];
+                if (CHO_MAP[cho]) result.push(...CHO_MAP[cho]); else result.push(cho);
+                if (JUNG_MAP[jung]) result.push(...JUNG_MAP[jung]); else result.push(jung);
+                if (jong !== '') {
+                    if (JONG_MAP[jong]) result.push(...JONG_MAP[jong]); else result.push(jong);
+                }
+                return result;
+            } else {
+                return [char];
+            }
+        }
+
+        // ==========================================
+        // [기능 1] 암호 만들기 (Generator)
+        // ==========================================
+        function renderGeneratorTable() {
+            const tbody = document.getElementById('generatorTableBody');
+            tableData.forEach(row => {
+                let tr = document.createElement('tr');
+                row.forEach(char => {
+                    let tdChar = document.createElement('td');
+                    tdChar.className = "border-2 border-amber-200 p-2 text-amber-700 bg-amber-50 font-sans text-lg";
+                    tdChar.innerText = char;
+                    
+                    let tdSym = document.createElement('td');
+                    tdSym.className = "border-2 border-amber-200 p-2 text-2xl text-slate-800";
+                    tdSym.innerHTML = symbolMap[char] || char;
+                    
+                    tr.appendChild(tdChar);
+                    tr.appendChild(tdSym);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('inputText').addEventListener('input', function(e) {
+            const text = e.target.value;
+            const outputDiv = document.getElementById('outputText');
+            outputDiv.innerHTML = ''; 
+
+            if (text.trim() === '') return;
+
+            const lines = text.split('\n');
+            lines.forEach(line => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'w-full flex flex-wrap gap-x-6 gap-y-4 mb-2';
+
+                const words = line.split(' ');
+                words.forEach(word => {
+                    if(!word) return;
+
+                    const wordDiv = document.createElement('div');
+                    wordDiv.className = 'flex flex-wrap gap-2';
+
+                    for (let i = 0; i < word.length; i++) {
+                        const char = word[i];
+                        const jamoArr = decomposeChar(char);
+                        
+                        // 클릭 토글 카드
+                        const syllableDiv = document.createElement('div');
+                        syllableDiv.className = 'relative flex items-center justify-center min-h-[4rem] min-w-[3.5rem] border-b-4 border-slate-300 pb-1 px-2 gap-1 bg-white rounded-2xl shadow-sm cursor-pointer hover:bg-slate-50 transition-all select-none overflow-hidden';
+                        
+                        const cipherDiv = document.createElement('div');
+                        cipherDiv.className = 'flex gap-1 items-center justify-center transition-opacity duration-300 pointer-events-none';
+                        jamoArr.forEach(jamo => {
+                            let content = symbolMap[jamo] ? symbolMap[jamo] : jamo;
+                            cipherDiv.innerHTML += `<span class="text-3xl font-bold flex items-center justify-center text-slate-800">${content}</span>`;
+                        });
+
+                        const koreanDiv = document.createElement('div');
+                        koreanDiv.className = 'absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 pointer-events-none';
+                        koreanDiv.innerHTML = `<span class="text-3xl text-pink-600 font-sans font-bold">${char}</span>`;
+                        
+                        syllableDiv.appendChild(cipherDiv);
+                        syllableDiv.appendChild(koreanDiv);
+
+                        let isCipher = true;
+                        syllableDiv.addEventListener('click', function() {
+                            isCipher = !isCipher;
+                            if (isCipher) {
+                                cipherDiv.classList.remove('opacity-0');
+                                koreanDiv.classList.add('opacity-0');
+                                this.classList.remove('border-pink-400', 'bg-pink-50');
+                                this.classList.add('border-slate-300', 'bg-white');
+                            } else {
+                                cipherDiv.classList.add('opacity-0');
+                                koreanDiv.classList.remove('opacity-0');
+                                this.classList.remove('border-slate-300', 'bg-white');
+                                this.classList.add('border-pink-400', 'bg-pink-50');
+                            }
+                        });
+                        
+                        wordDiv.appendChild(syllableDiv);
+                    }
+                    lineDiv.appendChild(wordDiv);
+                });
+                outputDiv.appendChild(lineDiv);
+            });
+        });
+
+        function clearGenerator() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('inputText').dispatchEvent(new Event('input'));
+        }
+
+
+        // ==========================================
+        // [기능 2] 암호 풀기 (Solver)
+        // ==========================================
+        
+        // 키보드 렌더링 - 배열 순서 버그 수정 (표와 동일한 레이아웃으로 변경)
+        function renderSolverKeyboard() {
+            const kbContainer = document.getElementById('solverKeyboard');
+            
+            // 가로 방향(행 기준)으로 순서대로 버튼을 생성하여 표와 똑같이 보이도록 수정
+            for(let row=0; row<5; row++) {
+                for(let col=0; col<6; col++) {
+                    let char = tableData[row][col];
+                    let symbol = symbolMap[char] || char;
+
+                    let btn = document.createElement('button');
+                    btn.className = "key-btn rounded-2xl h-16 md:h-20 flex flex-col items-center justify-center text-3xl text-slate-800 relative overflow-hidden";
+                    btn.innerHTML = symbol;
+                    
+                    // 클릭 이벤트: 기호를 누르면 한글이 풀이 결과창에 추가됨
+                    btn.onclick = () => addSolverChar(char);
+                    kbContainer.appendChild(btn);
+                }
+            }
+        }
+
+        const solverOutput = document.getElementById('solverOutput');
+        
+        // 글자 추가 함수 (누를 때마다 예쁜 카드가 나타남)
+        function addSolverChar(char) {
+            const span = document.createElement('span');
+            span.className = 'bg-white border-2 border-blue-200 text-blue-600 px-3 py-1 rounded-xl shadow-sm animate-[fadeIn_0.2s_ease-out] font-sans font-bold flex items-center justify-center min-w-[3rem] h-[3.5rem]';
+            span.innerText = char;
+            solverOutput.appendChild(span);
+            // 스크롤 맨 아래로
+            solverOutput.scrollTop = solverOutput.scrollHeight;
+        }
+
+        // 띄어쓰기 버튼
+        function solverSpace() {
+            const span = document.createElement('span');
+            span.className = 'w-8 h-full'; // 공백 역할
+            span.innerText = ' ';
+            solverOutput.appendChild(span);
+        }
+
+        // 지우기 버튼 (마지막 요소 삭제)
+        function solverBackspace() {
+            if (solverOutput.lastChild) {
+                solverOutput.removeChild(solverOutput.lastChild);
+            }
+        }
+
+        // 전체 삭제 버튼
+        function clearSolver() {
+            solverOutput.innerHTML = '';
+        }
+
+        // ==========================================
+        // 초기 실행
+        // ==========================================
+        renderGeneratorTable();
+        renderSolverKeyboard();
+    </script>
+</body>
+</html>
